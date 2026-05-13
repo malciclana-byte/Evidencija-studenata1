@@ -1,0 +1,96 @@
+#define _CRT_SECURE_NO_WARRNINGS
+#include "function.h"
+
+void provjeriAlokaciju(void* p) { //provjera uspjesnost alokacije
+	if (p == NULL) {
+		exit(EXIT_FAILURE);
+	}
+}
+void ocistiBuffer() { //ciscenje ulaznog spremnika nakon scanfa
+	int c;
+	while ((c = getchar()) != '\n' && c != EOF);
+}
+void kreirajBazu(const char* const imeDat) {
+	FILE* fp = fopen(imeDat, "ab");
+	if (fp != NULL) {
+		fclose(fp);
+	}
+}
+void dodajNovogStudenta(const char* const imeDat) {
+	FILE* fp = fopen(imeDat, "ab"); //rad s binarnom datotekom
+	if (fp == NULL) {
+		return;
+	}
+	STUDENT s;
+	char tempIme[100];
+	char tempPrez[100];
+
+	printf("Unesite ID: ");
+	scanf("%d", &s.id);
+	ocistiBuffer();
+
+	printf("Unesite ime: ");
+	scanf("%99s", tempIme); // dinamicko zauzimanje memorije prema duljini unosa
+	s.ime = (char*)malloc((strlen(tempIme) + 1) * sizeof(char));
+	provjeriAlokaciju(s.ime);
+	strcpy(s.ime, tempIme);
+
+	printf("Unesite prezime: ");
+	scanf("%99s", tempPrez);
+	s.prezime = (char*)malloc((strlen(tempPrez) + 1) * sizeof(char));
+	provjeriAlokaciju(s.prezime);
+	strcpy(s.prezime, tempPrez);
+
+	printf("Smjer: ");
+	scanf("%49s", s.smjer);
+	printf("Prosjek: ");
+	scanf("%f", &s.prosjek);
+	printf("Godina: ");
+	scanf("%d", &s.godina);
+
+	int iLen = (int)strlen(s.ime) + 1;
+	int pLen = (int)strlen(s.prezime) + 1;
+
+	fwrite(&s.id, sizeof(int), 1, fp);
+	fwrite(&iLen, sizeof(int), 1, fp);
+	fwrite(s.ime, sizeof(char), iLen, fp);
+	fwrite(&pLen, sizeof(int), 1, fp);
+	fwrite(s.prezime, sizeof(char), pLen, fp);
+	fwrite(&s.prosjek, sizeof(float), 1, fp);
+	fwrite(&s.godina, sizeof(int), 1, fp);
+	fwrite(s.smjer, sizeof(char), 50, fp);
+
+	free(s.ime);
+	free(s.prezime);
+	fclose(fp);
+}
+
+void ispisSvihIzDatoteke(const char* const imeDat) {
+	FILE* fp = fopen(imeDat, "rb");
+	if (fp == NULL) return;
+
+	STUDENT s;
+	int iLen, pLen;
+
+	while (fread(&s.id, sizeof(int), 1, fp) == 1) {
+		fread(&iLen, sizeof(int), 1, fp);
+		s.ime = (char*)malloc(iLen);
+		provjeriAlokaciju(s.ime);
+		fread(s.ime, 1, iLen, fp);
+
+		fread(&pLen, sizeof(int), 1, fp);
+		s.prezime = (char*)malloc(pLen);
+		provjeriAlokaciju(s.prezime);
+		fread(s.prezime, 1, pLen, fp);
+
+		fread(&s.prosjek, sizeof(float), 1, fp);
+		fread(&s.godina, sizeof(int), 1, fp);
+		fread(s.smjer, 1, 50, fp);
+
+		printf("ID:%d | %s %s | %s | %.2f | %d.god\n", s.id, s.ime, s.prezime, s.smjer, s.prosjek, s.godina);
+
+		free(s.ime);
+		free(s.prezime);
+	}
+	fclose(fp);
+}
