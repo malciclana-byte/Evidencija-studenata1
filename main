@@ -1,0 +1,29 @@
+#define _CRT_SECURE_NO_WARRNINGS
+#include "function.h"
+
+int main() {
+	const char* const dat = "studenti.bin";
+	int izbor = 0;
+	kreirajBazu(dat);
+
+	while (1) {
+		printf("\n--- 1. KONSTRUKCIJSKA VJEZBA ---\n");
+		printf("1. Dodaj studenta\n");
+		printf("2. Ispis svih studenata\n");
+		printf("3. Izlaz\n");
+		printf("Izbor: ");
+
+		if (scanf("%d", &izbor) != 1) {
+			ocistiBuffer();
+			continue;
+		}
+
+		if (izbor == 3) break;
+		switch (izbor) {
+		case 1: dodajNovogStudenta(dat); break;
+		case 2: ispisSvihIzDatoteke(dat); break;
+		default: printf("Krivi unos!\n");
+		}
+	}
+	return 0;
+}
