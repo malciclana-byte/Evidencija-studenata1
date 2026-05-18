@@ -1,96 +1,111 @@
-#define _CRT_SECURE_NO_WARRNINGS
-#include "function.h"
 
-void provjeriAlokaciju(void* p) { //provjera uspjesnost alokacije
-	if (p == NULL) {
-		exit(EXIT_FAILURE);
-	}
-}
-void ocistiBuffer() { //ciscenje ulaznog spremnika nakon scanfa
-	int c;
-	while ((c = getchar()) != '\n' && c != EOF);
-}
-void kreirajBazu(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "ab");
-	if (fp != NULL) {
-		fclose(fp);
-	}
-}
-void dodajNovogStudenta(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "ab"); //rad s binarnom datotekom
-	if (fp == NULL) {
-		return;
-	}
-	STUDENT s;
-	char tempIme[100];
-	char tempPrez[100];
-
-	printf("Unesite ID: ");
-	scanf("%d", &s.id);
-	ocistiBuffer();
-
-	printf("Unesite ime: ");
-	scanf("%99s", tempIme); // dinamicko zauzimanje memorije prema duljini unosa
-	s.ime = (char*)malloc((strlen(tempIme) + 1) * sizeof(char));
-	provjeriAlokaciju(s.ime);
-	strcpy(s.ime, tempIme);
-
-	printf("Unesite prezime: ");
-	scanf("%99s", tempPrez);
-	s.prezime = (char*)malloc((strlen(tempPrez) + 1) * sizeof(char));
-	provjeriAlokaciju(s.prezime);
-	strcpy(s.prezime, tempPrez);
-
-	printf("Smjer: ");
-	scanf("%49s", s.smjer);
-	printf("Prosjek: ");
-	scanf("%f", &s.prosjek);
-	printf("Godina: ");
-	scanf("%d", &s.godina);
-
-	int iLen = (int)strlen(s.ime) + 1;
-	int pLen = (int)strlen(s.prezime) + 1;
-
-	fwrite(&s.id, sizeof(int), 1, fp);
-	fwrite(&iLen, sizeof(int), 1, fp);
-	fwrite(s.ime, sizeof(char), iLen, fp);
-	fwrite(&pLen, sizeof(int), 1, fp);
-	fwrite(s.prezime, sizeof(char), pLen, fp);
-	fwrite(&s.prosjek, sizeof(float), 1, fp);
-	fwrite(&s.godina, sizeof(int), 1, fp);
-	fwrite(s.smjer, sizeof(char), 50, fp);
-
-	free(s.ime);
-	free(s.prezime);
-	fclose(fp);
+/* Koncept br. 1 (CRUD): Implementacija 'Update' opcije - izmjena prosjeka studenta */
+void azurirajProsjekStudenta(const char* const imeDat) {
+FILE* fp = fopen(imeDat, "rb+"); // "rb+" - otvaranje binarne datoteke za citanje i pisanje (Pravilo 19)
+if (fp == NULL) {
+printf("Pogreska pri otvaranju datoteke!\n");
+return;
 }
 
-void ispisSvihIzDatoteke(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "rb");
-	if (fp == NULL) return;
+int trazeniID;
+float noviProsjek;
+int pronadjen = 0;
 
-	STUDENT s;
-	int iLen, pLen;
+printf("Unesite ID studenta za izmjenu prosjeka: ");
+if (scanf("%d", &trazeniID) != 1) { ocistiBuffer(); fclose(fp); return; }
 
-	while (fread(&s.id, sizeof(int), 1, fp) == 1) {
-		fread(&iLen, sizeof(int), 1, fp);
-		s.ime = (char*)malloc(iLen);
-		provjeriAlokaciju(s.ime);
-		fread(s.ime, 1, iLen, fp);
+int id, iLen, pLen;
+long pozicijaID; // Varijabla za spremanje lokacije u datoteci
 
-		fread(&pLen, sizeof(int), 1, fp);
-		s.prezime = (char*)malloc(pLen);
-		provjeriAlokaciju(s.prezime);
-		fread(s.prezime, 1, pLen, fp);
+// Prolazimo kroz datoteku i trazimo studenta
+while (fread(&id, sizeof(int), 1, fp) == 1) {
+pozicijaID = ftell(fp) - sizeof(int); // Koncept br. 20: ftell() nam daje trenutnu poziciju u bajtovima
 
-		fread(&s.prosjek, sizeof(float), 1, fp);
-		fread(&s.godina, sizeof(int), 1, fp);
-		fread(s.smjer, 1, 50, fp);
+fread(&iLen, sizeof(int), 1, fp);
+fseek(fp, iLen, SEEK_CUR); // Koncept br. 20: fseek preskace ime jer nam ne treba
 
-		printf("ID:%d | %s %s | %s | %.2f | %d.god\n", s.id, s.ime, s.prezime, s.smjer, s.prosjek, s.godina);
+fread(&pLen, sizeof(int), 1, fp);
+fseek(fp, pLen, SEEK_CUR); // Koncept br. 20: fseek preskace prezime
 
-		free(s.ime);
-		free(s.prezime);
-	}
-	fclose(fp);
+if (id == trazeniID) {
+pronadjen = 1;
+printf("Unesite novi prosjek: ");
+scanf("%f", &noviProsjek);
+
+// Koncept br. 20: fseek() nas vraca tocno na mjesto gdje pocinje prosjek tog studenta
+// Preskacemo: ID (4B) + iLen (4B) + ime (iLen B) + pLen (4B) + prezime (pLen B)
+fseek(fp, pozicijaID + sizeof(int) + sizeof(int) + iLen + sizeof(int) + pLen, SEEK_SET);
+
+fwrite(&noviProsjek, sizeof(float), 1, fp); // Upisujemo novi prosjek preko starog
+printf("Prosjek uspjesno azuriran!\n");
+break;
+}
+
+// Ako ovaj student nije onaj trazeni, preskacemo prosjek, godinu i smjer da dodjemo do iduceg
+fseek(fp, sizeof(float) + sizeof(int) + 50, SEEK_CUR);
+}
+
+if (!pronadjen) printf("Student s ID %d nije pronadjen.\n", trazeniID);
+fclose(fp);
+}
+
+/* Koncept br. 1 (CRUD): Implementacija 'Delete' opcije - brisanje studenta iz baze */
+void obrisiStudentaPoID(const char* const imeDat) {
+FILE* fp = fopen(imeDat, "rb"); // Otvaramo originalnu datoteku za citanje
+if (fp == NULL) return;
+
+FILE* fpTemp = fopen("temp.bin", "wb"); // Otvaramo privremenu datoteku za pisanje
+if (fpTemp == NULL) { fclose(fp); return; }
+
+int trazeniID;
+int obrisan = 0;
+printf("Unesite ID studenta kojeg zelite obrisati: ");
+if (scanf("%d", &trazeniID) != 1) { ocistiBuffer(); fclose(fp); fclose(fpTemp); return; }
+
+STUDENT s;
+int iLen, pLen;
+
+// Citamo studente iz originalne datoteke
+while (fread(&s.id, sizeof(int), 1, fp) == 1) {
+fread(&iLen, sizeof(int), 1, fp);
+s.ime = (char*)malloc(iLen);
+provjeriAlokaciju(s.ime);
+fread(s.ime, sizeof(char), iLen, fp);
+
+fread(&pLen, sizeof(int), 1, fp);
+s.prezime = (char*)malloc(pLen);
+provjeriAlokaciju(s.prezime);
+fread(s.prezime, sizeof(char), pLen, fp);
+
+fread(&s.prosjek, sizeof(float), 1, fp);
+fread(&s.godina, sizeof(int), 1, fp);
+fread(s.smjer, sizeof(char), 50, fp);
+
+// Ako ID NIJE onaj koji zelimo obrisati, kopiramo studenta u privremenu datoteku
+if (s.id != trazeniID) {
+fwrite(&s.id, sizeof(int), 1, fpTemp);
+fwrite(&iLen, sizeof(int), 1, fpTemp);
+fwrite(s.ime, sizeof(char), iLen, fpTemp);
+fwrite(&pLen, sizeof(int), 1, fpTemp);
+fwrite(s.prezime, sizeof(char), pLen, fpTemp);
+fwrite(&s.prosjek, sizeof(float), 1, fpTemp);
+fwrite(&s.godina, sizeof(int), 1, fpTemp);
+fwrite(s.smjer, sizeof(char), 50, fpTemp);
+} else {
+obrisan = 1; // Ako se ID podudara, samo ga preskocimo (ne kopiramo ga)
+}
+
+free(s.ime);
+free(s.prezime);
+}
+
+fclose(fp);
+fclose(fpTemp);
+
+// Koncept br. 21: Koristenje remove() i rename() za zamjenu datoteka
+remove(imeDat); // Brisemo staru originalnu datoteku
+rename("temp.bin", imeDat); // Preimenujemo privremenu u ime originalne
+
+if (obrisan) printf("Student uspjesno obrisan!\n");
+else printf("Student s tim ID-jem ne postoji.\n");
 }
