@@ -1,24 +1,24 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "function.h" 
-
+// prekida program ako alokacija memorije ne uspije
 void provjeriAlokaciju(void* p) {
 	if (p == NULL) {
 		exit(EXIT_FAILURE); 
 	}
 }
- 
+ //brise zaostale entere iz spremnika nakon unosa brojeva
 void ocistiBuffer() {
 	int c;
 	while ((c = getchar()) != '\n' && c != EOF);
 }
-
+//stvara praznu datoteku ako vec ne postoji
 void kreirajBazu(const char* const imeDat) {
 	FILE* fp = fopen(imeDat, "ab"); 
 	if (fp != NULL) {
 		fclose(fp); 
 	}
 }
-
+//unos novog studenta s dinamickim imenom/prezimenom na kraj
 void dodajNovogStudenta(const char* const imeDat) {
 	FILE* fp = fopen(imeDat, "ab"); 
 	if (fp == NULL) return;
@@ -53,7 +53,7 @@ void dodajNovogStudenta(const char* const imeDat) {
 	int iLen = (int)strlen(s.ime) + 1;
 	int pLen = (int)strlen(s.prezime) + 1;
 
-	
+	//binarni upis svih podataka u datoteku
 	fwrite(&s.id, sizeof(int), 1, fp);
 	fwrite(&iLen, sizeof(int), 1, fp); 
 	fwrite(s.ime, sizeof(char), iLen, fp); 
@@ -69,7 +69,7 @@ void dodajNovogStudenta(const char* const imeDat) {
 	fclose(fp); 
 }
 
- 
+ //cita i ispisuje sve studente iz binarne datoteke 
 void ispisSvihIzDatoteke(const char* const imeDat) {
 	FILE* fp = fopen(imeDat, "rb"); 
 	if (fp == NULL) return;
@@ -79,7 +79,7 @@ void ispisSvihIzDatoteke(const char* const imeDat) {
 
 	
 	while (fread(&s.id, sizeof(int), 1, fp) == 1) {
-		
+		//Prvo citamo duljinu stringa, alociramo prostor, pa citamo
 		fread(&iLen, sizeof(int), 1, fp);
 		s.ime = (char*)malloc(iLen);
 		provjeriAlokaciju(s.ime);
@@ -105,7 +105,7 @@ void ispisSvihIzDatoteke(const char* const imeDat) {
 	fclose(fp);
 }
 
- 
+ // Pronalazi studenta po ID-u i mijenja mu prosjek izravno u datoteci
 void azurirajProsjekStudenta(const char* const imeDat) {
 	FILE* fp = fopen(imeDat, "rb+"); 
 	if (fp == NULL) {
@@ -138,7 +138,7 @@ void azurirajProsjekStudenta(const char* const imeDat) {
 			pronadjen = 1;
 			printf("Unesite novi prosjek: ");
 			scanf("%f", &noviProsjek);
-
+			
 			fseek(fp, pozicijaID + sizeof(int) + sizeof(int) + iLen + sizeof(int) + pLen, SEEK_SET);
 
 			fwrite(&noviProsjek, sizeof(float), 1, fp); 
@@ -154,7 +154,7 @@ void azurirajProsjekStudenta(const char* const imeDat) {
 	fclose(fp);
 }
 
-
+// brise studenta tako da sve ostale zapise kopira u temp datoteku, pa zamijeni mjesta 
 void obrisiStudentaPoID(const char* const imeDat) {
 	FILE* fp = fopen(imeDat, "rb"); 
 	if (fp == NULL) return;
