@@ -1,35 +1,34 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "functions.h"
+#include "function.h"
 
 int main() {
-const char* const dat = "studenti.bin";
-int izbor = 0;
+	const char* const dat = "studenti.bin";
+	int izbor = 0;
 
-kreirajBazu(dat);
+	kreirajBazu(dat);
 
-while (1) {
-printf("\n--- EVIDENCIJA STUDENATA (2. KONSTRUKCIJSKA VJEZBA) ---\n");
-printf("1. Dodaj studenta\n");
-printf("2. Ispis svih studenata\n");
-printf("3. Azuriraj prosjek studenta (NOVO - Update)\n");
-printf("4. Obrisi studenta po ID-ju (NOVO - Delete)\n");
-printf("5. Izlaz\n");
-printf("Vas izbor: ");
+	while (1) {
+		printf("1. Dodaj studenta\n");
+		printf("2. Ispis svih studenata\n");
+		printf("3. Azuriraj prosjek studenta (NOVO - Update)\n");
+		printf("4. Obrisi studenta po ID-ju (NOVO - Delete)\n");
+		printf("5. Izlaz\n");
+		printf("Vas izbor: ");
 
-if (scanf("%d", &izbor) != 1) {
-ocistiBuffer();
-continue;
-}
+		if (scanf("%d", &izbor) != 1) {
+			ocistiBuffer();
+			continue;
+		}
 
-if (izbor == 5) break;
+		if (izbor == 5) break;
 
-switch (izbor) {
-case 1: dodajNovogStudenta(dat); break;
-case 2: ispisSvihIzDatoteke(dat); break;
-case 3: azurirajProsjekStudenta(dat); break; // Poziv nove Update funkcije
-case 4: obrisiStudentaPoID(dat); break; // Poziv nove Delete funkcije
-default: printf("Krivi odabir!\n");
-}
-}
-return 0;
+		switch (izbor) {
+		case 1: dodajNovogStudenta(dat); break;
+		case 2: ispisSvihIzDatoteke(dat); break;
+		case 3: azurirajProsjekStudenta(dat); break; 
+		case 4: obrisiStudentaPoID(dat); break; 
+		default: printf("Krivi odabir!\n");
+		}
+	}
+	return 0;
 }
