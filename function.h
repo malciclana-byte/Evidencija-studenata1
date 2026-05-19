@@ -8,12 +8,12 @@
 #include <string.h>
 
 typedef struct student {
-int id;
-char* ime;
-char* prezime;
-float prosjek;
-int godina;
-char smjer[50];
+	int id;
+	char* ime;
+	char* prezime;
+	float prosjek;
+	int godina;
+	char smjer[50];
 } STUDENT;
 
 void kreirajBazu(const char* const imeDat);
@@ -21,9 +21,7 @@ void dodajNovogStudenta(const char* const imeDat);
 void ispisSvihIzDatoteke(const char* const imeDat);
 void provjeriAlokaciju(void* p);
 void ocistiBuffer();
-
-
-void azurirajProsjekStudenta(const char* const imeDat); // Update operacija
-void obrisiStudentaPoID(const char* const imeDat); // Delete operacija
+void azurirajProsjekStudenta(const char* const imeDat); 
+void obrisiStudentaPoID(const char* const imeDat);
 
 #endif
