@@ -25,3 +25,4 @@ void azurirajProsjekStudenta(const char* const imeDat);
 void obrisiStudentaPoID(const char* const imeDat);
 
 #endif
+
