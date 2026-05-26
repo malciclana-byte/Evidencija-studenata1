@@ -2,7 +2,8 @@
 #include "function.h"
 
 int main() {
-	const char* const dat = "studenti.bin";
+	
+	const char* const dat = "studenti.txt";
 	int izbor = 0;
 
 	kreirajBazu(dat);
@@ -10,9 +11,11 @@ int main() {
 	while (1) {
 		printf("1. Dodaj studenta\n");
 		printf("2. Ispis svih studenata\n");
-		printf("3. Azuriraj prosjek studenta (NOVO - Update)\n");
-		printf("4. Obrisi studenta po ID-ju (NOVO - Delete)\n");
-		printf("5. Izlaz\n");
+		printf("3. Azuriraj prosjek studenta\n");
+		printf("4. Obrisi studenta po ID-ju\n");
+		printf("5. Sortiraj i ispisi\n");
+		printf("6. Pronadji studenta po ID-ju \n");
+		printf("7. Izlaz\n");
 		printf("Vas izbor: ");
 
 		if (scanf("%d", &izbor) != 1) {
@@ -20,13 +23,15 @@ int main() {
 			continue;
 		}
 
-		if (izbor == 5) break;
+		if (izbor == 7) break;
 
 		switch (izbor) {
 		case 1: dodajNovogStudenta(dat); break;
 		case 2: ispisSvihIzDatoteke(dat); break;
-		case 3: azurirajProsjekStudenta(dat); break; 
-		case 4: obrisiStudentaPoID(dat); break; 
+		case 3: azurirajProsjekStudenta(dat); break;
+		case 4: obrisiStudentaPoID(dat); break;
+		case 5: sortirajIOflineIspisi(dat); break;
+		case 6: pronadjiStudentaBsearch(dat); break;
 		default: printf("Krivi odabir!\n");
 		}
 	}
