@@ -16,13 +16,19 @@ typedef struct student {
 	char smjer[50];
 } STUDENT;
 
+
 void kreirajBazu(const char* const imeDat);
 void dodajNovogStudenta(const char* const imeDat);
 void ispisSvihIzDatoteke(const char* const imeDat);
 void provjeriAlokaciju(void* p);
 void ocistiBuffer();
-void azurirajProsjekStudenta(const char* const imeDat); 
+void azurirajProsjekStudenta(const char* const imeDat);
 void obrisiStudentaPoID(const char* const imeDat);
+
+
+int usporediStudentePoID(const void* a, const void* b);
+void sortirajIOflineIspisi(const char* const imeDat);
+void pronadjiStudentaBsearch(const char* const imeDat);
 
 #endif
 
