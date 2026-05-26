@@ -1,26 +1,29 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "function.h" 
-// prekida program ako alokacija memorije ne uspije
+#include "function.h"
+
 void provjeriAlokaciju(void* p) {
 	if (p == NULL) {
-		exit(EXIT_FAILURE); 
+		exit(EXIT_FAILURE);
 	}
 }
- //brise zaostale entere iz spremnika nakon unosa brojeva
+
+
 void ocistiBuffer() {
 	int c;
 	while ((c = getchar()) != '\n' && c != EOF);
 }
-//stvara praznu datoteku ako vec ne postoji
+
+
 void kreirajBazu(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "ab"); 
+	FILE* fp = fopen(imeDat, "a");
 	if (fp != NULL) {
-		fclose(fp); 
+		fclose(fp);
 	}
 }
-//unos novog studenta s dinamickim imenom/prezimenom na kraj
+
+
 void dodajNovogStudenta(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "ab"); 
+	FILE* fp = fopen(imeDat, "a"); 
 	if (fp == NULL) return;
 
 	STUDENT s;
@@ -30,187 +33,248 @@ void dodajNovogStudenta(const char* const imeDat) {
 	if (scanf("%d", &s.id) != 1) { ocistiBuffer(); fclose(fp); return; }
 	ocistiBuffer();
 
-	printf("Ime: ");
-	scanf("%99s", tempIme);
-
-	
+	printf("Ime: "); scanf("%99s", tempIme);
 	s.ime = (char*)malloc(strlen(tempIme) + 1);
-	provjeriAlokaciju(s.ime); 
+	provjeriAlokaciju(s.ime);
 	strcpy(s.ime, tempIme);
 
-	printf("Prezime: ");
-	scanf("%99s", tempPrez);
-	
+	printf("Prezime: "); scanf("%99s", tempPrez);
 	s.prezime = (char*)malloc(strlen(tempPrez) + 1);
 	provjeriAlokaciju(s.prezime);
 	strcpy(s.prezime, tempPrez);
 
-	printf("Smjer: "); scanf("%49s", s.smjer);
+	printf("Smjer (bez razmaka): "); scanf("%49s", s.smjer);
 	printf("Prosjek: "); scanf("%f", &s.prosjek);
 	printf("Godina: "); scanf("%d", &s.godina);
 
-
-	int iLen = (int)strlen(s.ime) + 1;
-	int pLen = (int)strlen(s.prezime) + 1;
-
-	//binarni upis svih podataka u datoteku
-	fwrite(&s.id, sizeof(int), 1, fp);
-	fwrite(&iLen, sizeof(int), 1, fp); 
-	fwrite(s.ime, sizeof(char), iLen, fp); 
-	fwrite(&pLen, sizeof(int), 1, fp); 
-	fwrite(s.prezime, sizeof(char), pLen, fp); 
-	fwrite(&s.prosjek, sizeof(float), 1, fp);
-	fwrite(&s.godina, sizeof(int), 1, fp);
-	fwrite(s.smjer, sizeof(char), 50, fp);
-
 	
+	fprintf(fp, "%d %s %s %s %.2f %d\n", s.id, s.ime, s.prezime, s.smjer, s.prosjek, s.godina);
+
 	free(s.ime);
 	free(s.prezime);
-	fclose(fp); 
+	fclose(fp);
+	printf("Student uspjesno dodan!\n");
 }
 
- //cita i ispisuje sve studente iz binarne datoteke 
 void ispisSvihIzDatoteke(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "rb"); 
+	FILE* fp = fopen(imeDat, "r"); 
 	if (fp == NULL) return;
 
 	STUDENT s;
-	int iLen, pLen;
+	char tempIme[100], tempPrez[100];
 
 	
-	while (fread(&s.id, sizeof(int), 1, fp) == 1) {
-		//Prvo citamo duljinu stringa, alociramo prostor, pa citamo
-		fread(&iLen, sizeof(int), 1, fp);
-		s.ime = (char*)malloc(iLen);
+	while (fscanf(fp, "%d %99s %99s %49s %f %d", &s.id, tempIme, tempPrez, s.smjer, &s.prosjek, &s.godina) == 6) {
+		s.ime = (char*)malloc(strlen(tempIme) + 1);
 		provjeriAlokaciju(s.ime);
-		fread(s.ime, sizeof(char), iLen, fp);
+		strcpy(s.ime, tempIme);
 
-		
-		fread(&pLen, sizeof(int), 1, fp);
-		s.prezime = (char*)malloc(pLen);
+		s.prezime = (char*)malloc(strlen(tempPrez) + 1);
 		provjeriAlokaciju(s.prezime);
-		fread(s.prezime, sizeof(char), pLen, fp);
-
-		fread(&s.prosjek, sizeof(float), 1, fp);
-		fread(&s.godina, sizeof(int), 1, fp);
-		fread(s.smjer, sizeof(char), 50, fp);
+		strcpy(s.prezime, tempPrez);
 
 		printf("ID: %d | Student: %s %s | Smjer: %s | Prosjek: %.2f | %d. god\n",
 			s.id, s.ime, s.prezime, s.smjer, s.prosjek, s.godina);
 
-		
 		free(s.ime);
 		free(s.prezime);
 	}
 	fclose(fp);
 }
 
- // Pronalazi studenta po ID-u i mijenja mu prosjek izravno u datoteci
+
 void azurirajProsjekStudenta(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "rb+"); 
-	if (fp == NULL) {
-		printf("Pogreska pri otvaranju datoteke!\n");
-		return;
-	}
-
-	int trazeniID;
-	float noviProsjek;
-	int pronadjen = 0;
-
-	printf("Unesite ID studenta za izmjenu prosjeka: ");
-	if (scanf("%d", &trazeniID) != 1) { ocistiBuffer(); fclose(fp); return; }
-
-	int id, iLen, pLen;
-	long pozicijaID;  
-
-	 
-	while (fread(&id, sizeof(int), 1, fp) == 1) {
-		
-		pozicijaID = ftell(fp) - sizeof(int);
-
-		fread(&iLen, sizeof(int), 1, fp);
-		fseek(fp, iLen, SEEK_CUR); 
-
-		fread(&pLen, sizeof(int), 1, fp);
-		fseek(fp, pLen, SEEK_CUR); 
-
-		if (id == trazeniID) {
-			pronadjen = 1;
-			printf("Unesite novi prosjek: ");
-			scanf("%f", &noviProsjek);
-			
-			fseek(fp, pozicijaID + sizeof(int) + sizeof(int) + iLen + sizeof(int) + pLen, SEEK_SET);
-
-			fwrite(&noviProsjek, sizeof(float), 1, fp); 
-			printf("Prosjek uspjesno azuriran!\n");
-			break;
-		}
-
-		
-		fseek(fp, sizeof(float) + sizeof(int) + 50, SEEK_CUR);
-	}
-
-	if (!pronadjen) printf("Student s ID %d nije pronadjen.\n", trazeniID);
-	fclose(fp);
-}
-
-// brise studenta tako da sve ostale zapise kopira u temp datoteku, pa zamijeni mjesta 
-void obrisiStudentaPoID(const char* const imeDat) {
-	FILE* fp = fopen(imeDat, "rb"); 
+	FILE* fp = fopen(imeDat, "r");
 	if (fp == NULL) return;
 
-	FILE* fpTemp = fopen("temp.bin", "wb"); 
+	FILE* fpTemp = fopen("temp.txt", "w");
 	if (fpTemp == NULL) { fclose(fp); return; }
 
-	int trazeniID;
-	int obrisan = 0;
-	printf("Unesite ID studenta kojeg zelite obrisati: ");
+	int trazeniID, pronadjen = 0;
+	float noviProsjek;
+
+	printf("Unesite ID studenta za izmjenu prosjeka: ");
 	if (scanf("%d", &trazeniID) != 1) { ocistiBuffer(); fclose(fp); fclose(fpTemp); return; }
 
 	STUDENT s;
-	int iLen, pLen;
+	char tempIme[100], tempPrez[100];
 
-	while (fread(&s.id, sizeof(int), 1, fp) == 1) {
-		fread(&iLen, sizeof(int), 1, fp);
-		s.ime = (char*)malloc(iLen);
-		provjeriAlokaciju(s.ime);
-		fread(s.ime, sizeof(char), iLen, fp);
-
-		fread(&pLen, sizeof(int), 1, fp);
-		s.prezime = (char*)malloc(pLen);
-		provjeriAlokaciju(s.prezime);
-		fread(s.prezime, sizeof(char), pLen, fp);
-
-		fread(&s.prosjek, sizeof(float), 1, fp);
-		fread(&s.godina, sizeof(int), 1, fp);
-		fread(s.smjer, sizeof(char), 50, fp);
-
-		 
-		if (s.id != trazeniID) {
-			fwrite(&s.id, sizeof(int), 1, fpTemp);
-			fwrite(&iLen, sizeof(int), 1, fpTemp);
-			fwrite(s.ime, sizeof(char), iLen, fpTemp);
-			fwrite(&pLen, sizeof(int), 1, fpTemp);
-			fwrite(s.prezime, sizeof(char), pLen, fpTemp);
-			fwrite(&s.prosjek, sizeof(float), 1, fpTemp);
-			fwrite(&s.godina, sizeof(int), 1, fpTemp);
-			fwrite(s.smjer, sizeof(char), 50, fpTemp);
+	while (fscanf(fp, "%d %99s %99s %49s %f %d", &s.id, tempIme, tempPrez, s.smjer, &s.prosjek, &s.godina) == 6) {
+		if (s.id == trazeniID) {
+			pronadjen = 1;
+			printf("Unesite novi prosjek: ");
+			scanf("%f", &noviProsjek);
+			s.prosjek = noviProsjek; 
 		}
-		else {
-			obrisan = 1; 
-		}
-
-		free(s.ime);
-		free(s.prezime);
+		
+		fprintf(fpTemp, "%d %s %s %s %.2f %d\n", s.id, tempIme, tempPrez, s.smjer, s.prosjek, s.godina);
 	}
 
 	fclose(fp);
 	fclose(fpTemp);
 
-	
-	remove(imeDat); 
-		rename("temp.bin", imeDat);
+	remove(imeDat);
+	rename("temp.txt", imeDat);
 
-		if (obrisan) printf("Student uspjesno obrisan!\n");
-		else printf("Student s tim ID-jem ne postoji.\n");
+	if (pronadjen) printf("Prosjek uspjesno azuriran!\n");
+	else printf("Student s ID %d nije pronadjen.\n", trazeniID);
+}
+
+
+void obrisiStudentaPoID(const char* const imeDat) {
+	FILE* fp = fopen(imeDat, "r");
+	if (fp == NULL) return;
+
+	FILE* fpTemp = fopen("temp.txt", "w");
+	if (fpTemp == NULL) { fclose(fp); return; }
+
+	int trazeniID, obrisan = 0;
+	printf("Unesite ID studenta kojeg zelite obrisati: ");
+	if (scanf("%d", &trazeniID) != 1) { ocistiBuffer(); fclose(fp); fclose(fpTemp); return; }
+
+	STUDENT s;
+	char tempIme[100], tempPrez[100];
+
+	while (fscanf(fp, "%d %99s %99s %49s %f %d", &s.id, tempIme, tempPrez, s.smjer, &s.prosjek, &s.godina) == 6) {
+		
+		if (s.id != trazeniID) {
+			fprintf(fpTemp, "%d %s %s %s %.2f %d\n", s.id, tempIme, tempPrez, s.smjer, s.prosjek, s.godina);
+		}
+		else {
+			obrisan = 1;
+		}
+	}
+
+	fclose(fp);
+	fclose(fpTemp);
+
+	remove(imeDat);
+	rename("temp.txt", imeDat);
+
+	if (obrisan) printf("Student uspjesno obrisan!\n");
+	else printf("Student s tim ID-jem ne postoji.\n");
+}
+
+
+int usporediStudentePoID(const void* a, const void* b) {
+	const STUDENT* s1 = (const STUDENT*)a;
+	const STUDENT* s2 = (const STUDENT*)b;
+
+	if (s1->id < s2->id) return -1;
+	if (s1->id > s2->id) return 1;
+	return 0;
+}
+
+
+void sortirajIOflineIspisi(const char* const imeDat) {
+	FILE* fp = fopen(imeDat, "r");
+	if (fp == NULL) return;
+
+	int brojStudenata = 0;
+	STUDENT s;
+	char tempIme[100], tempPrez[100];
+
+	while (fscanf(fp, "%d %99s %99s %49s %f %d", &s.id, tempIme, tempPrez, s.smjer, &s.prosjek, &s.godina) == 6) {
+		brojStudenata++;
+	}
+
+	if (brojStudenata == 0) {
+		printf("Baza podataka je prazna.\n");
+		fclose(fp);
+		return;
+	}
+
+	rewind(fp); 
+	STUDENT* polje = (STUDENT*)malloc(brojStudenata * sizeof(STUDENT));
+	provjeriAlokaciju(polje);
+
+	for (int i = 0; i < brojStudenata; i++) {
+		fscanf(fp, "%d %99s %99s %49s %f %d", &polje[i].id, tempIme, tempPrez, polje[i].smjer, &polje[i].prosjek, &polje[i].godina);
+
+		polje[i].ime = (char*)malloc(strlen(tempIme) + 1);
+		provjeriAlokaciju(polje[i].ime);
+		strcpy(polje[i].ime, tempIme);
+
+		polje[i].prezime = (char*)malloc(strlen(tempPrez) + 1);
+		provjeriAlokaciju(polje[i].prezime);
+		strcpy(polje[i].prezime, tempPrez);
+	}
+	fclose(fp);
+
+	
+	qsort(polje, brojStudenata, sizeof(STUDENT), usporediStudentePoID);
+
+	printf("\n--- SORTIRANI ISPIS STUDENATA (PO ID-ju) ---\n");
+	for (int i = 0; i < brojStudenata; i++) {
+		printf("ID: %d | %s %s | Smjer: %s | Prosjek: %.2f | %d.god\n",
+			polje[i].id, polje[i].ime, polje[i].prezime, polje[i].smjer, polje[i].prosjek, polje[i].godina);
+		free(polje[i].ime);
+		free(polje[i].prezime);
+	}
+	free(polje);
+}
+
+void pronadjiStudentaBsearch(const char* const imeDat) {
+	FILE* fp = fopen(imeDat, "r");
+	if (fp == NULL) return;
+
+	int brojStudenata = 0;
+	STUDENT s;
+	char tempIme[100], tempPrez[100];
+
+	while (fscanf(fp, "%d %99s %99s %49s %f %d", &s.id, tempIme, tempPrez, s.smjer, &s.prosjek, &s.godina) == 6) {
+		brojStudenata++;
+	}
+
+	if (brojStudenata == 0) {
+		printf("Baza je prazna.\n");
+		fclose(fp);
+		return;
+	}
+
+	rewind(fp);
+	STUDENT* polje = (STUDENT*)malloc(brojStudenata * sizeof(STUDENT));
+	provjeriAlokaciju(polje);
+
+	for (int i = 0; i < brojStudenata; i++) {
+		fscanf(fp, "%d %99s %99s %49s %f %d", &polje[i].id, tempIme, tempPrez, polje[i].smjer, &polje[i].prosjek, &polje[i].godina);
+
+		polje[i].ime = (char*)malloc(strlen(tempIme) + 1);
+		provjeriAlokaciju(polje[i].ime);
+		strcpy(polje[i].ime, tempIme);
+
+		polje[i].prezime = (char*)malloc(strlen(tempPrez) + 1);
+		provjeriAlokaciju(polje[i].prezime);
+		strcpy(polje[i].prezime, tempPrez);
+	}
+	fclose(fp);
+
+	
+	qsort(polje, brojStudenata, sizeof(STUDENT), usporediStudentePoID);
+
+	STUDENT kljuc;
+	printf("Unesite ID studenta kojeg trazite: ");
+	if (scanf("%d", &kljuc.id) != 1) {
+		ocistiBuffer();
+		for (int i = 0; i < brojStudenata; i++) { free(polje[i].ime); free(polje[i].prezime); }
+		free(polje); return;
+	}
+
+	
+	STUDENT* pronadjen = (STUDENT*)bsearch(&kljuc, polje, brojStudenata, sizeof(STUDENT), usporediStudentePoID);
+
+	if (pronadjen != NULL) {
+		printf("\n[STUDENT PRONADJEN U BSEARCH]\n");
+		printf("ID: %d | %s %s | Smjer: %s | Prosjek: %.2f | %d.god\n",
+			pronadjen->id, pronadjen->ime, pronadjen->prezime, pronadjen->smjer, pronadjen->prosjek, pronadjen->godina);
+	}
+	else {
+		printf("Student s ID-jem %d ne postoji u bazi.\n", kljuc.id);
+	}
+
+	for (int i = 0; i < brojStudenata; i++) {
+		free(polje[i].ime);
+		free(polje[i].prezime);
+	}
+	free(polje);
 }
