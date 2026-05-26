@@ -1,0 +1,105 @@
+Koncepti:
+1.CRUID:
+Create:Funkcija "void dodajNovogStudenta(const char* const imeDat)"
+Read:Funkcija"void ispisSvihIzDatoteke(const char* const imeDat)"
+Update:Funkcija"void azurirajProsjekStudenta(const char* const imeDat) "
+Delete:Funkcija"brisiStudentaPoID(const char* const imeDat)"
+
+2.Konkretni primitivni tipovi podataka:int id; float prosjek; int godina;
+
+3.Konkretni složeni tipovi:
+struct student {
+	int id;
+	char* ime;
+	char* prezime;
+	float prosjek;
+	int godina;
+	char smjer[50];
+};
+
+4.Primjena typedef sa strukturama:
+typedef struct student {
+	int id;
+	char* ime;
+	char* prezime;
+	float prosjek;
+	int godina;
+	char smjer[50];
+} STUDENT;
+
+5.Imenovanje identfikatora:
+void provjeriAlokaciju(void* p)
+void ocistiBuffer()
+void dodajNovogStudenta(const char* const imeDat)
+
+7.Organizacija izvornog koda: podijeljena u tri djela: main.c,function.c,function.h
+
+10.Izbornik/podizbornik:
+switch (izbor) {
+		case 1: dodajNovogStudenta(dat); break;
+		case 2: ispisSvihIzDatoteke(dat); break;
+		case 3: azurirajProsjekStudenta(dat); break; 
+		case 4: obrisiStudentaPoID(dat); break;
+
+12.Generalna upotreba pokazivača:
+	char* ime;
+	char* prezime;
+
+13.Generalna upotreba struktura i funkcija:
+STUDENT s;
+
+14.Zaštita parametara kod svih funkcija:
+void dodajNovogStudenta(const char* const imeDat)
+
+16.Dinamičko zauzimanje memorije i 17.korištenje malloc(),free():
+s.ime = (char*)malloc(strlen(tempIme) + 1);
+free(s.ime);
+
+18.Sigurnosno brisanje memorije:
+void provjeriAlokaciju(void* p) {
+	if (p == NULL) {
+		exit(EXIT_FAILURE); 
+	}
+}
+
+19.Datoteke(Binarna, provjera pokazivača i zatvaranje):
+FILE* fp = fopen(imeDat, "ab"); 
+	if (fp != NULL) {
+		fclose(fp); 
+	}
+
+20.Koristiti funkcije fseek(),ftell(),rewind():
+pozicijaID = ftell(fp) - sizeof(int);
+fseek(fp, iLen, SEEK_CUR)
+
+21.Koristiti funkcije remove() i rename():
+	remove(imeDat); 
+	rename("temp.bin", imeDat);
+
+22.Upravljati s pogreškama
+	if (p == NULL) {
+		exit(EXIT_FAILURE); 
+	}
+
+	if (fp == NULL) return;
+23.Sortitanje:
+qsort(polje, brojStudenata, sizeof(STUDENT), usporediStudentePoID);
+
+24.Pretraživanje:
+STUDENT* pronadjen = (STUDENT*)bsearch(&kljuc, polje, brojStudenata, sizeof(STUDENT), usporediStudentePoID);
+
+26.Pokazivači na funkcije:
+int usporediStudentePoID(const void* a, const void* b) {
+	const STUDENT* s1 = (const STUDENT*)a;
+	const STUDENT* s2 = (const STUDENT*)b;
+
+	if (s1->id < s2->id) return -1;
+	if (s1->id > s2->id) return 1;
+	return 0;
+}
+	
+
+
+
+
+
